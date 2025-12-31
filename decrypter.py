@@ -7,28 +7,28 @@ import sys
 import os
 
 def write_file(content,path):
-    with open(path,'w') as file:
+    with open(path,'wb') as file:
         file.write(content)
 
 def read_file_content(path):
-    with open(path,'r') as file:
+    with open(path,'rb') as file:
         content = file.read()
     return content
 
 def decrypt_files(cipher,path):
-    items = os.listdir(path)
-    for item in items:
-        new_path = os.path.join(path, item)
+    files = os.listdir(path)
+    for file in files:
+        new_path = os.path.join(path, file)
         if os.path.isfile(new_path):
             decrypt_file_content(new_path,cipher)
             
         elif os.path.isdir(new_path):
-            decrypt_files(new_path,cipher)
+            decrypt_files(cipher,new_path)
             
 def decrypt_file_content(path,cipher):
     encrypted_content = read_file_content(path)
-    decrypted_content = cipher.decrypt(encrypted_content.encode())
-    write_file(decrypted_content)
+    decrypted_content = cipher.decrypt(encrypted_content)
+    write_file(decrypted_content,path)
 
 def show_decrypter():
     root = tk.Tk()

