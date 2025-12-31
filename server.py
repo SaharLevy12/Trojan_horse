@@ -9,10 +9,22 @@ from cryptography.fernet import Fernet
 import json
 import base64
 
+BRODCAST_PORT = 8080
 HOST = "0.0.0.0"
 PORT = 9443
 
 MASTER_KEY = os.getenv("MASTER_KEY")
+
+def listen_to_brodcast_requests():
+    brodcast_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    brodcast_sock.bind((HOST, BRODCAST_PORT))
+    print("BRODCAST SERVER ESTABLISHED..")
+    
+    msg, addr = brodcast_sock.recvfrom(1024)
+
+    if msg.decode() == "DISCOVER_SERVER":
+        print("Discovery from", addr)
+        brodcast_sock.sendto(b"SERVER_HERE", addr)
 
 def create_connection():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -78,6 +90,9 @@ def fetch_key_from_db():
     return decrypted_key
 
 def main():
+    
+    listen_to_brodcast_requests()
+    
     server,conn = create_connection()
     secured_conn = wrap_conn_ssl(conn, "server.crt", "server.key")
     
