@@ -129,12 +129,12 @@ def main():
     BRODCAST_PORT = 8080
     REMOTE_ADRESS = find_server_address(BRODCAST_PORT)
     IP = REMOTE_ADRESS[0]
+    
+    USER = os.getenv("USERNAME")
 
     conn = create_conn(IP,PORT)
     secured_conn = wrap_conn(conn,"server.crt")
-    path = r"C:\Users\Sahar Levy\Desktop\Projects\test_folder"
-    # path = r"C:\Users\Pc2\test_folder"
-    # path = r"C:\Users\Sahar Levy\Desktop\test_folder"
+    path = os.path.join(r"C:\Users",USER,"test_folder")
     password = "gamma_cyber_youngfortech"
     key = create_encryption_key(password)
     cipher = transfer_key_to_cipher(key)
